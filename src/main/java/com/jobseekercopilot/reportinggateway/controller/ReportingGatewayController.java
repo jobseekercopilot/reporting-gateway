@@ -6,6 +6,7 @@ import com.jobseekercopilot.reportinggateway.service.ReportingGatewayService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -31,7 +32,7 @@ public class ReportingGatewayController {
     })
     public ResponseEntity<ReportingSummaryResponse> summary(
             @AuthenticationPrincipal Jwt accessToken) {
-        return ResponseEntity.ok(reportingGatewayService.summary(
+        return privateResponse(reportingGatewayService.summary(
                 accessToken.getSubject(),
                 accessToken.getTokenValue()));
     }
@@ -45,8 +46,15 @@ public class ReportingGatewayController {
     })
     public ResponseEntity<UcJournalResponse> ucJournal(
             @AuthenticationPrincipal Jwt accessToken) {
-        return ResponseEntity.ok(reportingGatewayService.ucJournal(
+        return privateResponse(reportingGatewayService.ucJournal(
                 accessToken.getSubject(),
                 accessToken.getTokenValue()));
+    }
+
+    private <T> ResponseEntity<T> privateResponse(T body) {
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .header("X-Content-Type-Options", "nosniff")
+                .body(body);
     }
 }

@@ -12,9 +12,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest(properties =
+@SpringBootTest(properties = {
         "reporting-gateway.security.reporting-service-token="
-        + "test-only-reporting-service-token-32-bytes")
+                + "test-only-reporting-service-token-32-bytes",
+        "springdoc.api-docs.enabled=true"
+})
 @AutoConfigureMockMvc
 class OpenApiExportTest {
     private static final Path CONTRACT = Path.of("contracts/openapi.json");

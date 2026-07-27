@@ -16,6 +16,13 @@ services:
   reporting-service:
     base-url: ${REPORTING_SERVICE_URL:http://reporting-service:8096}
 
+springdoc:
+  api-docs:
+    enabled: ${OPENAPI_DOCS_ENABLED:false}
+    version: openapi-3-0
+  swagger-ui:
+    enabled: ${SWAGGER_UI_ENABLED:false}
+
 management:
   endpoints:
     web:

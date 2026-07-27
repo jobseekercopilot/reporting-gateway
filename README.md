@@ -32,9 +32,13 @@ The build is reproducible from source and does not require a locally supplied JA
 Runtime startup fails closed unless these settings are configured:
 
 - `AUTH_JWKS_URI`
-- `AUTH_ISSUER`
-- `AUTH_AUDIENCE`
+- `REPORTING_GATEWAY_JWT_ISSUER`
+- `REPORTING_GATEWAY_JWT_AUDIENCE`
 - `REPORTING_GATEWAY_SERVICE_TOKEN` (at least 32 bytes)
+
+Runtime OpenAPI and Swagger UI endpoints are disabled by default. The reviewed
+contract remains available in source; operators may enable the runtime endpoints
+explicitly with `OPENAPI_DOCS_ENABLED=true` or `SWAGGER_UI_ENABLED=true`.
 
 ## API contract
 
