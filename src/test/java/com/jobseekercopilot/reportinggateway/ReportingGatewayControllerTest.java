@@ -2,42 +2,58 @@ package com.jobseekercopilot.reportinggateway;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.jobseekercopilot.generated.reportingservice.model.ApplicationSummary;
-import com.jobseekercopilot.generated.reportingservice.model.ReportingSummaryResponse;
+import com.jobseekercopilot.reportinggateway.dto.ReportingSummaryResponse;
+import com.jobseekercopilot.reportinggateway.dto.ReportingSummaryResponse.ApplicationSummary;
+import com.jobseekercopilot.reportinggateway.config.SecurityConfig;
 import com.jobseekercopilot.reportinggateway.service.ReportingGatewayService;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest
+@WebMvcTest(properties =
+        "reporting-gateway.security.reporting-service-token="
+        + "test-only-reporting-service-token-32-bytes")
+@Import(SecurityConfig.class)
 class ReportingGatewayControllerTest {
     @Autowired private MockMvc mockMvc;
     @MockBean private ReportingGatewayService reportingGatewayService;
 
     @Test
-    void returnsUnauthorizedWhenUserHeaderMissing() throws Exception {
+    void returnsUnauthorizedWhenAccessTokenMissing() throws Exception {
         mockMvc.perform(get("/api/v1/reports/summary"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Missing X-User-Id header"));
+                .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"))
+                .andExpect(jsonPath("$.message").value("Valid authentication is required."));
     }
 
     @Test
-    void returnsSummaryFromReportingService() throws Exception {
-        ReportingSummaryResponse response = new ReportingSummaryResponse()
-                .userId("user-123")
-                .applicationSummary(new ApplicationSummary().applied(2).total(2))
-                .ucJournalPreview("05/10/2026 - Applied for Software Developer at Matchtech.");
-        when(reportingGatewayService.summary(eq("user-123"))).thenReturn(response);
+    void scopesSummaryToJwtSubjectAndIgnoresForgedUserHeader() throws Exception {
+        ReportingSummaryResponse response = new ReportingSummaryResponse(
+                "subject-123",
+                new ApplicationSummary(0, 2, 0, 0, 0, 0, 0, 2),
+                List.of(),
+                null,
+                "05/10/2026 - Applied for Software Developer at Matchtech.");
+        when(reportingGatewayService.summary(eq("subject-123"), eq("access-token")))
+                .thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/reports/summary").header("X-User-Id", "user-123"))
+        mockMvc.perform(get("/api/v1/reports/summary")
+                        .header("X-User-Id", "forged-user")
+                        .with(jwt().jwt(token -> token
+                                .subject("subject-123")
+                                .tokenValue("access-token")
+                                .claim("token_type", "access"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.userId").value("user-123"))
+                .andExpect(jsonPath("$.userId").value("subject-123"))
                 .andExpect(jsonPath("$.applicationSummary.applied").value(2))
                 .andExpect(jsonPath("$.ucJournalPreview").value("05/10/2026 - Applied for Software Developer at Matchtech."));
     }

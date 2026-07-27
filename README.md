@@ -4,16 +4,20 @@ Browser-facing Spring Boot gateway for the Job Seeker Copilot reporting APIs.
 
 ## Current scope
 
-The inherited baseline forwards two reporting operations:
+The gateway exposes two reporting operations:
 
 - `GET /api/v1/reports/summary`
 - `GET /api/v1/reports/uc-journal`
 
-This repository is an audit baseline, not a beta-ready release. The source currently
-depends on a locally supplied generated `reporting-service-client` JAR. That binary
-is intentionally not committed. See
-[`docs/BETA_READINESS_AUDIT.md`](docs/BETA_READINESS_AUDIT.md) for the verified
-build limitation and the security and product gaps recorded for follow-up.
+The inherited generated-client JAR dependency has been replaced with a
+source-controlled HTTP adapter. The remaining reporting product gaps are recorded
+in [`docs/BETA_READINESS_AUDIT.md`](docs/BETA_READINESS_AUDIT.md).
+
+The gateway is the reporting authentication boundary. It validates signed access
+tokens against the configured issuer, audience, token type and JWKS endpoint,
+derives report ownership exclusively from the token subject, and ignores
+caller-supplied ownership headers. It forwards the validated bearer value, the
+trusted subject and its dedicated service identity to Reporting Service.
 
 ## Build
 
@@ -23,15 +27,19 @@ Java 17 and Maven are required.
 mvn -B clean verify
 ```
 
-The command will fail in a clean clone until the generated-client dependency is
-made reproducible. This is tracked as a beta blocker; do not work around it by
-committing generated JARs.
+The build is reproducible from source and does not require a locally supplied JAR.
+
+Runtime startup fails closed unless these settings are configured:
+
+- `AUTH_JWKS_URI`
+- `AUTH_ISSUER`
+- `AUTH_AUDIENCE`
+- `REPORTING_GATEWAY_SERVICE_TOKEN` (at least 32 bytes)
 
 ## API contract
 
-The contract captured during the source audit is in `contracts/openapi.json`.
-Contract generation currently occurs during the test suite and also depends on the
-missing generated client.
+The reviewed version 2 contract is in `contracts/openapi.json`. The test suite
+fails if runtime-generated OpenAPI drifts from that file.
 
 ## Licence
 
