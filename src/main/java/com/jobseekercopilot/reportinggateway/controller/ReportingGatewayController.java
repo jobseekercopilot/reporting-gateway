@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -49,6 +51,24 @@ public class ReportingGatewayController {
         return privateResponse(reportingGatewayService.ucJournal(
                 accessToken.getSubject(),
                 accessToken.getTokenValue()));
+    }
+
+    @GetMapping(value = "/evidence.txt", produces = MediaType.TEXT_PLAIN_VALUE)
+    @Operation(summary = "Download work-search evidence as plain text")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Owner-scoped evidence export returned"),
+            @ApiResponse(responseCode = "401", description = "Valid access token required"),
+            @ApiResponse(responseCode = "502", description = "Reporting service failed")
+    })
+    public ResponseEntity<String> evidenceExport(
+            @AuthenticationPrincipal Jwt accessToken) {
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .header("X-Content-Type-Options", "nosniff")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=job-search-evidence.txt")
+                .contentType(MediaType.TEXT_PLAIN)
+                .body(reportingGatewayService.evidenceExport(
+                        accessToken.getSubject(), accessToken.getTokenValue()));
     }
 
     private <T> ResponseEntity<T> privateResponse(T body) {

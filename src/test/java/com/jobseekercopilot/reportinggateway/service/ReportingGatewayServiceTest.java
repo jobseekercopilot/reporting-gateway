@@ -50,4 +50,23 @@ class ReportingGatewayServiceTest {
         assertThat(result.applicationSummary().applied()).isEqualTo(2);
         server.verify();
     }
+    @Test
+    void sendsDerivedIdentityForEvidenceExport() {
+        RestTemplate restTemplate = new RestTemplate();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(restTemplate).build();
+        server.expect(requestTo("http://reporting-service:8096/api/v1/reports/evidence.txt"))
+                .andExpect(method(HttpMethod.GET))
+                .andExpect(header("Authorization", "Bearer access-token"))
+                .andExpect(header("X-Service-Token", SERVICE_TOKEN))
+                .andExpect(header("X-Report-Owner", "subject-123"))
+                .andRespond(withSuccess("Persisted evidence", MediaType.TEXT_PLAIN));
+        ReportingGatewayService service = new ReportingGatewayService(
+                restTemplate,
+                new ReportingGatewayCredentials(SERVICE_TOKEN),
+                "http://reporting-service:8096");
+
+        assertThat(service.evidenceExport("subject-123", "access-token"))
+                .isEqualTo("Persisted evidence");
+        server.verify();
+    }
 }

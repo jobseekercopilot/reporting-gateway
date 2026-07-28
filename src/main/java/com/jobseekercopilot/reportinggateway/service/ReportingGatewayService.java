@@ -58,6 +58,19 @@ public class ReportingGatewayService {
         return response;
     }
 
+    public String evidenceExport(String owner, String accessToken) {
+        long startedAt = System.nanoTime();
+        log.info("Reporting evidence export request started");
+        String response = restTemplate.exchange(
+                reportingServiceBaseUrl + "/api/v1/reports/evidence.txt",
+                HttpMethod.GET,
+                request(owner, accessToken),
+                String.class).getBody();
+        log.info("Reporting evidence export request completed durationMs={}",
+                (System.nanoTime() - startedAt) / 1_000_000);
+        return response == null ? "" : response;
+    }
+
     private HttpEntity<Void> request(String owner, String accessToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);

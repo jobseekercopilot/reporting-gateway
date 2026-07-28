@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -60,6 +61,25 @@ class ReportingGatewayControllerTest {
                 .andExpect(jsonPath("$.userId").value("subject-123"))
                 .andExpect(jsonPath("$.applicationSummary.applied").value(2))
                 .andExpect(jsonPath("$.ucJournalPreview").value("05/10/2026 - Applied for Software Developer at Matchtech."));
+    }
+
+    @Test
+    void scopesEvidenceExportToJwtSubjectWithSafeDownloadHeaders() throws Exception {
+        when(reportingGatewayService.evidenceExport(eq("subject-123"), eq("access-token")))
+                .thenReturn("Persisted work-search evidence");
+
+        mockMvc.perform(get("/api/v1/reports/evidence.txt")
+                        .header("X-User-Id", "forged-user")
+                        .with(jwt().jwt(token -> token
+                                .subject("subject-123")
+                                .tokenValue("access-token")
+                                .claim("token_type", "access"))))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", containsString("no-store")))
+                .andExpect(header().string("Content-Disposition",
+                        "attachment; filename=job-search-evidence.txt"))
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+                .andExpect(content().string("Persisted work-search evidence"));
     }
 
     @Test
