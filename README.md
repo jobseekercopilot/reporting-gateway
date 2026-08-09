@@ -1,5 +1,13 @@
 # Reporting Gateway
 
+## Role in Job Seeker Copilot
+
+| Role | Called by | Calls | Data | Local port |
+|---|---|---|---|---:|
+| JWT-protected reporting facade | Client Express BFF | Reporting Service | None | 8095 |
+
+See the central [reporting journey](https://docs.jobseekercopilot.com/journeys/reporting-payments/), [gateway guide](https://docs.jobseekercopilot.com/services/frontend-gateways/), and [API map](https://docs.jobseekercopilot.com/apis/overview/).
+
 Browser-facing Spring Boot gateway for the Job Seeker Copilot reporting APIs.
 
 ## Current scope
