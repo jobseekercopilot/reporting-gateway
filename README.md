@@ -12,10 +12,11 @@ Browser-facing Spring Boot gateway for the Job Seeker Copilot reporting APIs.
 
 ## Current scope
 
-The gateway exposes two reporting operations:
+The gateway exposes three reporting operations:
 
 - `GET /api/v1/reports/summary`
 - `GET /api/v1/reports/uc-journal`
+- `GET /api/v1/reports/evidence.txt`
 
 The inherited generated-client JAR dependency has been replaced with a
 source-controlled HTTP adapter. The remaining reporting product gaps are recorded
