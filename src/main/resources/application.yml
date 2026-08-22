@@ -2,12 +2,26 @@ spring:
   application:
     name: reporting-gateway
 
+reporting-gateway:
+  security:
+    jwk-set-uri: ${AUTH_JWKS_URI:http://authentication-service:8084/.well-known/jwks.json}
+    issuer: ${REPORTING_GATEWAY_JWT_ISSUER:job-seeker-copilot-authentication}
+    audience: ${REPORTING_GATEWAY_JWT_AUDIENCE:job-seeker-copilot-services}
+    reporting-service-token: ${REPORTING_GATEWAY_SERVICE_TOKEN:}
+
 server:
   port: ${SERVER_PORT:8095}
 
 services:
   reporting-service:
     base-url: ${REPORTING_SERVICE_URL:http://reporting-service:8096}
+
+springdoc:
+  api-docs:
+    enabled: ${OPENAPI_DOCS_ENABLED:false}
+    version: openapi-3-0
+  swagger-ui:
+    enabled: ${SWAGGER_UI_ENABLED:false}
 
 management:
   endpoints:
